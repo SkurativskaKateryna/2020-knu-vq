@@ -5,8 +5,7 @@
 java.iml
 target/
 
-*.iml/
-
+*.iml
 
 # User-specific stuff
 .idea/**/workspace.xml
