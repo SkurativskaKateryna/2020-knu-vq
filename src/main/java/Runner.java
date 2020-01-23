@@ -1,5 +1,6 @@
 import utils.fftTransformer.BufferForInt;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
 
@@ -18,6 +19,14 @@ public class Runner {
         * */
         ArrayList<Short> dutSignalArray = AudioConverter.saveAudioToArrayList("src/main/data/dataset_task2/DUT.wav");
 
+        /*
+        * CREATE results directory
+        * */
+        File results = new File("src/main/data/results/");
+        if(!results.exists()) {
+            results.mkdir();
+        }
+        /*
 
         /*
         * WRITE Synchronized track from to defined file
