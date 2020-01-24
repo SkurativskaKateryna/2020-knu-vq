@@ -1,17 +1,24 @@
 import utils.DataProvider;
-
+import utils.fftTransformer.BufferForInt;
+import utils.fftTransformer.BufferForShort;
+import utils.fftTransformer.RealDoubleFFT;
 import javax.sound.sampled.AudioInputStream;
 import javax.sound.sampled.AudioSystem;
 import javax.sound.sampled.UnsupportedAudioFileException;
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
+import java.io.*;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 
 
+
+
 public class AudioConverter {
+
+    private static RealDoubleFFT transformer;
+    private static int fftLength = 22050;
+
 
     /**
      * This method read data from file placed in selected path using build in AudioInputStream class.
@@ -107,6 +114,137 @@ public class AudioConverter {
             sData[i] = 0;
         }
         return bytes;
+    }
+
+
+    /**
+    * Convert array of shorts to ArrayList of Shorts
+    * */
+    public static ArrayList<Short> arrayToList(short[] data) {
+        ArrayList<Short> list = new ArrayList<>();
+
+        for (short s : data) {
+            list.add(s);
+        }
+
+        return list;
+
+    }
+
+
+    /**
+    * Convert ArrayList of Short to array of short
+    * */
+    public static short[] listToArray(ArrayList<Short> data) {
+        short[] array = new short[data.size()];
+        for (int i = 0; i < array.length; i++) {
+            array[i] = data.get(i);
+        }
+        return array;
+    }
+
+
+    /**
+    * Fast Fourier Transformer.
+     *
+     * Convert signal to its spectrum representation
+    * */
+    public static ArrayList<BufferForInt> transformFFT(short[] sData) {
+
+
+        //convert all data to list of Buffers with 22050 numbers.
+
+        ArrayList<BufferForShort> buffersToTransform = new ArrayList<>();
+
+        short [] part = new short[fftLength];
+        for(int i = 0, j=0; i< sData.length; i++, j++){
+           if(j>=fftLength){
+               j=0;
+               buffersToTransform.add(new BufferForShort(part));
+               part = new short[fftLength];
+           }
+
+            part[j] = sData[i];
+        }
+
+
+        ArrayList<BufferForInt> bufferForInts = new ArrayList<>();
+
+
+        transformer = new RealDoubleFFT(fftLength);
+
+        for(BufferForShort shortBuffer : buffersToTransform){
+            double[] toTransform = new double[shortBuffer.getValues().length];
+
+            for (int i = 0; i < shortBuffer.getValues().length; i++) {
+                toTransform[i] = (double) shortBuffer.getValues()[i] / 32768.0; // signed 16 bit
+            }
+            transformer.ft(toTransform);
+
+            int[] ints = new int[toTransform.length];
+
+            for(int i =0; i<toTransform.length;i++){
+                ints[i] = (int) Math.abs(toTransform[i]*10);
+            }
+
+            bufferForInts.add(new BufferForInt((ints)));
+        }
+        return bufferForInts;
+    }
+
+
+    /**
+     * Read PCM from file and convert it to ArrayList of shorts
+     *
+     * Convert signal to its spectrum representation
+     * */
+    public static ArrayList<Short> savePCMtoArrayList(String path){
+
+        ArrayList<Short> result = new ArrayList<>();
+
+
+        try {
+            InputStream in = new FileInputStream(path);
+
+            byte[] audioBytes = new byte[1024 *2];
+            short[] shorts;
+            while ((in.read(audioBytes)) != -1) {
+
+                shorts = byte2Short(audioBytes);
+                for (short s : shorts) {
+                    result.add(s);
+                }
+
+            }
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        return result;
+    }
+
+
+    /**
+    *  Write data stored in BufferForInt to file
+    * */
+    public static void saveFFTtoFile(ArrayList<BufferForInt> data, String path){
+
+        try( BufferedWriter br = new BufferedWriter( new OutputStreamWriter(new FileOutputStream(path, true), StandardCharsets.UTF_8))) {
+
+            for(BufferForInt d : data){
+                for(int i =0; i< d.getValues().length; i++){
+
+                    br.write(d.getValues()[i] + " ");
+                }
+                br.write("\n");
+            }
+            br.flush();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+
     }
 
 }
