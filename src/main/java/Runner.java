@@ -32,7 +32,7 @@ public class Runner {
         * CREATE fft directory
         * */
         File fft = new File("src/main/data/fft/");
-        if(!results.exists()) {
+        if(!fft.exists()) {
             results.mkdir();
         }
         
