@@ -26,8 +26,17 @@ public class Runner {
         if(!results.exists()) {
             results.mkdir();
         }
+        
+       
         /*
-
+        * CREATE fft directory
+        * */
+        File fft = new File("src/main/data/fft/");
+        if(!results.exists()) {
+            results.mkdir();
+        }
+        
+        
         /*
         * WRITE Synchronized track from to defined file
         * */
